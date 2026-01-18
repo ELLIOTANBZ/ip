@@ -4,6 +4,8 @@ public class Bossa {
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
+        String tasks[] = new String[100];
+        int taskCount = 0;
         String input;
 
         System.out.println("Hello! I'm Bossa");
@@ -21,8 +23,19 @@ public class Bossa {
                 break;
             }
 
+            if (input.equalsIgnoreCase("list")) {
+                System.out.println("____________________________________________________________");
+                for (int i = 0; i < taskCount; i++) {
+                    System.out.println(" " + (i + 1) + ". " + tasks[i]);
+                }
+                System.out.println("____________________________________________________________");
+                continue;
+            }
+
+            tasks[taskCount] = input;
+            taskCount++;
             System.out.println("____________________________________________________________");
-            System.out.println(" " + input);
+            System.out.println("added: " + input);
             System.out.println("____________________________________________________________");
         }
 

@@ -8,4 +8,5 @@ blah
 mark 10
 deadline submit /by
 event party /from /to
+remove 1
 bye

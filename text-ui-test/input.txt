@@ -3,4 +3,9 @@ deadline do homework /by no idea :-p
 event orientation /from 4/10/2019 /to 11/10/2019
 mark 1
 list
+todo 
+blah
+mark 10
+deadline submit /by
+event party /from /to
 bye

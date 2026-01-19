@@ -7,8 +7,8 @@ public class Bossa {
         Task[] tasks = new Task[100];
         int taskCount = 0;
 
-        System.out.println("Hello! I'm Bossa");
-        System.out.println("What can I do for you?");
+        System.out.println("Good day Boss. I'm Bossa.");
+        System.out.println("How may I be of service?");
         System.out.println("____________________________________________________________");
 
 
@@ -18,7 +18,8 @@ public class Bossa {
             // bye
             if (input.equalsIgnoreCase("bye")) {
                 System.out.println("____________________________________________________________");
-                System.out.println("Bye. Hope to see you again soon!");
+                System.out.println("Best regards,");
+                System.out.println("Bossa.");
                 System.out.println("____________________________________________________________");
                 break;
             }
@@ -58,11 +59,48 @@ public class Bossa {
                 continue;
             }
 
-            tasks[taskCount] = new Task(input);
-            taskCount++;
-            System.out.println("____________________________________________________________");
-            System.out.println("added: " + input);
-            System.out.println("____________________________________________________________");
+            //ToDo
+            if (input.startsWith("todo ")) {
+                String description = input.substring(5);
+                tasks[taskCount] = new ToDo(description);
+
+                System.out.println("____________________________________________________________");
+                System.out.println("Got it Boss, added this task:");
+                System.out.println(" " + tasks[taskCount]);
+                taskCount++;
+                System.out.println("You now have " + taskCount + " tasks in your list.");
+                System.out.println("____________________________________________________________");
+                continue;
+            }
+
+            //Deadline
+            if (input.startsWith("deadline ")) {
+                String[] description = input.substring(9).split(" /by ");
+                tasks[taskCount] = new Deadline(description[0], description[1]);
+
+                System.out.println("____________________________________________________________");
+                System.out.println("Got it Boss, added this task:");
+                System.out.println(" " + tasks[taskCount]);
+                taskCount++;
+                System.out.println("You now have " + taskCount + " tasks in your list.");
+                System.out.println("____________________________________________________________");
+                continue;
+            }
+
+            //Event
+            if (input.startsWith("event ")) {
+                String[] description = input.substring(6).split(" /from | /to ");
+                tasks[taskCount] = new Event(description[0], description[1], description[2]);
+
+                System.out.println("____________________________________________________________");
+                System.out.println("Got it Boss, added this task:");
+                System.out.println(" " + tasks[taskCount]);
+                taskCount++;
+                System.out.println("You now have " + taskCount + " tasks in your list.");
+                System.out.println("____________________________________________________________");
+                continue;
+            }
+
         }
 
         scanner.close();

@@ -1,6 +1,6 @@
 package bossa.storage;
 
-import Task;
+import bossa.Task; // Make sure Task.java is in src\main\java\bossa
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -1,3 +1,6 @@
+/**
+ * Represents an Event task.
+ */
 public class Event extends Task {
 
     protected String from;
@@ -13,5 +16,9 @@ public class Event extends Task {
     public String toString() {
         return "[E]" + super.toString() + " (from: " + this.from + " to: " + this.to + ")";
     }
-}
 
+    @Override
+    public String toStorageString() {
+        return "E | " + (isDone ? "1" : "0") + " | " + description + " | " + from + " | " + to;
+    }
+}

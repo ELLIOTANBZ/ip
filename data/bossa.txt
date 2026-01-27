@@ -1,0 +1,6 @@
+E | 1 | orientation | 4/10/2019 | 11/10/2019
+T | 0 | borrow book
+D | 0 | do homework | no idea :-p
+E | 0 | orientation | 4/10/2019 | 11/10/2019
+T | 0 | borrow book
+E | 0 | orientation | 4/10/2019 | 11/10/2019

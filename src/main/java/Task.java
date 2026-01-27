@@ -8,7 +8,7 @@ public class Task {
     }
 
     public String getStatusIcon() {
-        return isDone ? "X" : " ";
+        return (isDone ? "X" : " "); 
     }
 
     public void markAsDone() {
@@ -31,24 +31,24 @@ public class Task {
     public static Task fromStorageString(String line) {
         String[] parts = line.split(" \\| ");
         String type = parts[0];
-        boolean done = parts[1].equals("1");
-        String desc = parts[2];
+        boolean isDone = parts[1].equals("1");
+        Task task;
 
-        Task t;
         switch (type) {
             case "T":
-                t = new ToDo(desc);
+                task = new ToDo(parts[2]);
                 break;
             case "D":
-                t = new Deadline(desc, parts[3]);
+                task = new Deadline(parts[2], parts[3]);
                 break;
             case "E":
-                t = new Event(desc, parts[3], parts[4]);
+                task = new Event(parts[2], parts[3], parts[4]);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown task type");
         }
-        if (done) t.markAsDone();
-        return t;
+
+        if (isDone) task.markAsDone();
+        return task;
     }
 }

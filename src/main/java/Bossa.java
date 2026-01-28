@@ -1,235 +1,134 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
-/**
- * Bossa chatbot for task management.
- * Supports ToDo, Deadline, and Event tasks.
- * Automatically saves and loads tasks from disk.
- */
 public class Bossa {
-    private static final Path DATA_PATH = Paths.get("data", "bossa.txt");
-    private final List<Task> tasks = new ArrayList<>();
 
-    /**
-     * Loads tasks from disk into the task list.
-     * If file or folder doesn't exist, starts with empty list.
-     * Skips corrupted lines.
-     */
-    private void loadTasks() {
-        if (!Files.exists(DATA_PATH)) {
-            System.out.println("Data file not found. Starting with an empty task list.");
-            return;
-        }
+    private final TaskList tasks;
+    private final Ui ui;
+    private final Storage storage;
 
-        try {
-            List<String> lines = Files.readAllLines(DATA_PATH);
-            for (String line : lines) {
-                try {
-                    tasks.add(Task.fromStorageString(line));
-                } catch (Exception e) {
-                    System.err.println("Skipping corrupted line: " + line);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error loading tasks: " + e.getMessage());
-        }
+    public Bossa(String filePath) {
+        ui = new Ui();
+        storage = new Storage("data/bossa.txt");
+        List<Task> loaded = storage.loadTasks();
+        tasks = new TaskList(loaded);
     }
 
-    /**
-     * Saves current tasks to disk.
-     * Creates data folder if it doesn't exist.
-     */
-    private void saveTasks() {
-        try {
-            if (!Files.exists(DATA_PATH.getParent())) {
-                Files.createDirectories(DATA_PATH.getParent());
-            }
+    public void run() {
 
-            List<String> lines = new ArrayList<>();
-            for (Task task : tasks) {
-                lines.add(task.toStorageString());
-            }
-
-            Files.write(DATA_PATH, lines);
-        } catch (IOException e) {
-            System.err.println("Error saving tasks: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Main method, runs the chatbot loop.
-     */
-    public static void main(String[] args) {
-        Bossa bossa = new Bossa();
-        bossa.run();
-    }
-
-    /**
-     * Runs the chatbot input loop.
-     */
-    private void run() {
-        Scanner scanner = new Scanner(System.in);
-        loadTasks();
-
-        System.out.println("Good day Boss. I'm Bossa.");
-        System.out.println("How may I be of service?");
-        System.out.println("____________________________________________________________");
+        ui.showWelcome();
 
         while (true) {
-            String input = scanner.nextLine().trim();
+            String fullInput = ui.readCommand().trim();
+            String input = Parser.getCommandWord(fullInput);
+
             if (input.isEmpty()) {
-                System.out.println("____________________________________________________________");
-                System.out.println("My apologies Boss, I don't understand that command.");
+                ui.showDontUnderstand();
                 continue;
             }
 
             if (input.equalsIgnoreCase("bye")) {
-                System.out.println("____________________________________________________________");
-                System.out.println("Best regards,");
-                System.out.println("Bossa.");
-                System.out.println("____________________________________________________________");
+                ui.showBye();
                 break;
             }
 
             if (input.equalsIgnoreCase("list")) {
-                System.out.println("____________________________________________________________");
-                System.out.println("The tasks in your list: ");
-                for (int i = 0; i < tasks.size(); i++) {
-                    System.out.println(" " + (i + 1) + ". " + tasks.get(i));
-                }
-                System.out.println("____________________________________________________________");
+                ui.showAllTasks(tasks);
                 continue;
             }
 
-            if (input.startsWith("mark ")) {
+            if (input.equalsIgnoreCase("mark")) {
                 try {
-                    int index = Integer.parseInt(input.split(" ")[1]) - 1;
-                    tasks.get(index).markAsDone();
-                    saveTasks();
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Great job! Marked as Done!");
-                    System.out.println(" " + tasks.get(index));
-                    System.out.println("____________________________________________________________");
+                    int index = Integer.parseInt(fullInput.split(" ")[1]) - 1;
+                    Task task = tasks.get(index);
+                    task.markAsDone();
+                    storage.saveTasks(tasks.getAll());
+                    ui.markAsDone(task);
                 } catch (Exception e) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Apologies Boss, that task number does not exist.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Apologies Boss, that task number does not exist.");
                 }
                 continue;
             }
 
-            if (input.startsWith("unmark ")) {
+            if (input.equalsIgnoreCase("unmark")) {
                 try {
-                    int index = Integer.parseInt(input.split(" ")[1]) - 1;
-                    tasks.get(index).markAsNotDone();
-                    saveTasks();
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Unmarked");
-                    System.out.println(" " + tasks.get(index));
-                    System.out.println("____________________________________________________________");
+                    int index = Integer.parseInt(fullInput.split(" ")[1]) - 1;
+                    Task task = tasks.get(index);
+                    task.markAsNotDone();
+                    storage.saveTasks(tasks.getAll());
+                    ui.markAsUndone(task);
                 } catch (Exception e) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Apologies Boss, that task number does not exist.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Apologies Boss, that task number does not exist.");
                 }
                 continue;
             }
 
-            if (input.startsWith("remove ")) {
+            if (input.equalsIgnoreCase("remove")) {
                 try {
-                    int index = Integer.parseInt(input.split(" ")[1]) - 1;
+                    int index = Integer.parseInt(fullInput.split(" ")[1]) - 1;
                     Task removed = tasks.remove(index);
-                    saveTasks();
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Got it Boss, removed this task:");
-                    System.out.println(" " + removed);
-                    System.out.println("You now have " + tasks.size() + " tasks in your list.");
-                    System.out.println("____________________________________________________________");
+                    storage.saveTasks(tasks.getAll());
+                    ui.removeTask(removed, tasks.size());
                 } catch (Exception e) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Apologies Boss, that task number does not exist.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Apologies Boss, that task number does not exist.");
                 }
                 continue;
             }
 
-            if (input.startsWith("todo ")) {
-                String description = input.substring(5).trim();
+            if (input.equalsIgnoreCase("todo")) {
+                String description = fullInput.length() > 4 ? fullInput.substring(5).trim() : "";
                 if (description.isEmpty()) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Boss, the description of a todo cannot be empty.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Boss, the description of a todo cannot be empty.");
                     continue;
                 }
-                tasks.add(new ToDo(description));
-                saveTasks();
-                System.out.println("____________________________________________________________");
-                System.out.println("Got it Boss, added this task:");
-                System.out.println(" " + tasks.get(tasks.size() - 1));
-                System.out.println("You now have " + tasks.size() + " tasks in your list.");
-                System.out.println("____________________________________________________________");
+                Task task = new ToDo(description);
+                tasks.add(task);
+                storage.saveTasks(tasks.getAll());
+                ui.addTask(task, tasks.size());
                 continue;
             }
 
-            if (input.startsWith("deadline ")) {
-                String[] parts = input.substring(9).split(" /by ");
+            if (input.equalsIgnoreCase("deadline")) {
+                String[] parts = fullInput.substring(9).split(" /by ");
                 if (parts.length < 2 || parts[1].trim().isEmpty()) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Boss, Deadline format: deadline <description> /by <time>");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Boss, Deadline format: deadline <description> /by <time>");
                     continue;
                 }
                 try {
-                    tasks.add(new Deadline(parts[0].trim(), parts[1].trim()));
-                    saveTasks();
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Got it Boss, added this task:");
-                    System.out.println(" " + tasks.get(tasks.size() - 1));
-                    System.out.println("You now have " + tasks.size() + " tasks in your list.");
-                    System.out.println("____________________________________________________________");
+                    Task task = new Deadline(parts[0].trim(), parts[1].trim());
+                    tasks.add(task);
+                    storage.saveTasks(tasks.getAll());
+                    ui.addTask(task, tasks.size());
                 } catch (DateTimeParseException e) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Boss, invalid date format. Use yyyy-MM-dd for deadlines.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Boss, invalid date format. Use yyyy-MM-dd for deadlines.");
                 }
                 continue;
             }
 
-            if (input.startsWith("event ")) {
-                String[] parts = input.substring(6).split(" /from | /to ");
+            if (input.equalsIgnoreCase("event")) {
+                String[] parts = fullInput.substring(6).split(" /from | /to ");
                 if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Boss, Event format: event <description> /from <start> /to <end>");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Boss, Event format: event <description> /from <start> /to <end>");
                     continue;
                 }
                 try {
-                    tasks.add(new Event(parts[0].trim(), parts[1].trim(), parts[2].trim()));
-                    saveTasks();
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Got it Boss, added this task:");
-                    System.out.println(" " + tasks.get(tasks.size() - 1));
-                    System.out.println("You now have " + tasks.size() + " tasks in your list.");
-                    System.out.println("____________________________________________________________");
+                    Task task = new Event(parts[0].trim(), parts[1].trim(), parts[2].trim());
+                    tasks.add(task);
+                    storage.saveTasks(tasks.getAll());
+                    ui.addTask(task, tasks.size());
                 } catch (DateTimeParseException e) {
-                    System.out.println("____________________________________________________________");
-                    System.out.println("Boss, invalid date format. Use yyyy-MM-dd for events.");
-                    System.out.println("____________________________________________________________");
+                    ui.showMessage("Boss, invalid date format. Use yyyy-MM-dd for events.");
                 }
                 continue;
             }
 
-            System.out.println("____________________________________________________________");
-            System.out.println("My apologies Boss, I don't understand that command.");
-            System.out.println("____________________________________________________________");
+            ui.showDontUnderstand();
         }
-
-        scanner.close();
     }
+
+    public static void main(String[] args) {
+        Bossa bossa = new Bossa("data/tasks.txt");
+        bossa.run();
+    }
+
 }

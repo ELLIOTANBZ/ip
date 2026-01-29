@@ -37,17 +37,17 @@ public class Task {
         Task task;
 
         switch (type) {
-            case "T":
-                task = new ToDo(parts[2]);
-                break;
-            case "D":
-                task = new Deadline(parts[2], parts[3]);
-                break;
-            case "E":
-                task = new Event(parts[2], parts[3], parts[4]);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown task type");
+        case "T":
+            task = new ToDo(parts[2]);
+            break;
+        case "D":
+            task = new Deadline(parts[2], parts[3]);
+            break;
+        case "E":
+            task = new Event(parts[2], parts[3], parts[4]);
+            break;
+        default:
+            throw new IllegalArgumentException("Unknown task type");
         }
 
         if (isDone) task.markAsDone();

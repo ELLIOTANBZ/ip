@@ -1,4 +1,5 @@
 package bossa;
+import java.util.List;
 import java.util.Scanner;
 
 public class Ui {
@@ -66,6 +67,16 @@ public class Ui {
         System.out.println(" " + task);
         System.out.println("You now have " + taskCount + " tasks in your list.");
         System.out.println("____________________________________________________________");
+    }
+
+    public void findTask(List<Task> tasks) {
+        System.out.println("____________________________________________________________");
+        System.out.println("Boss, here are the matching tasks in your list:");
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + "." + tasks.get(i));
+        }
+        System.out.println("____________________________________________________________");
+
     }
 
     public String readCommand(){

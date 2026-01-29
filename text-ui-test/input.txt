@@ -1,12 +1,13 @@
 todo borrow book
 deadline do homework /by no idea :-p
-event orientation /from 4/10/2019 /to 11/10/2019
+event book club orientation /from 2019-04-29 /to 2019-05-08
 mark 1
 list
 todo 
 blah
 mark 10
 deadline submit /by
+find book
 event party /from /to
 remove 1
 bye

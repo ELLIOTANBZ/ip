@@ -3,12 +3,21 @@ package bossa;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+/**
+* The main class of the Bossa chatbot application.
+* Handles user interface, task storage, and execution of commands
+*/
 public class Bossa {
 
     private final TaskList tasks;
     private final Ui ui;
     private final Storage storage;
 
+    /** 
+     * Contructs a new Bossa chatbot instance
+     * 
+     * @param filePath the file path to load and save tasks
+     */
     public Bossa(String filePath) {
         ui = new Ui();
         storage = new Storage("data/bossa.txt");
@@ -16,6 +25,10 @@ public class Bossa {
         tasks = new TaskList(loaded);
     }
 
+    /**
+     * Runs the Bossa application, continuously reading user input
+     * and executing commands until the user exits.
+     */
     public void run() {
 
         ui.showWelcome();

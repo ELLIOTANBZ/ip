@@ -1,3 +1,4 @@
+package bossa;
 public class Parser {
 
     public static String getCommandWord(String input) {

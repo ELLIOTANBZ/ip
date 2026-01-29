@@ -33,5 +33,17 @@ public class TaskList {
         return tasks.size();
     }
 
+    public List<Task> find(String keyword) {
+        List<Task> matches = new ArrayList<>();
+
+        for (Task task : tasks) {
+            if (task.description.toLowerCase().contains(keyword.toLowerCase())) {
+                matches.add(task);
+            }
+        }
+
+        return matches;
+    }
+
 
 }

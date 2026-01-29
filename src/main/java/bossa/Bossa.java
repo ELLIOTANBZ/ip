@@ -124,6 +124,19 @@ public class Bossa {
                 continue;
             }
 
+            if (input.equalsIgnoreCase("find")) {
+                String keyword = fullInput.substring(5).trim();
+                if (keyword.isEmpty()) {
+                    ui.showMessage("Boss, please provide a keyword to search for.");
+                    continue;
+                }
+                
+                List<Task> matches = tasks.find(keyword);
+                ui.findTask(matches);
+                continue;
+            }
+
+
             ui.showDontUnderstand();
         }
     }

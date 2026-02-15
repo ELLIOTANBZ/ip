@@ -33,6 +33,7 @@ public class MainWindow extends AnchorPane {
 
     /** Injects the Bossa instance */
     public void setBossa(Bossa b){
+        assert b != null : "Bossa instance must not be null";
         bossa = b;
         dialogContainer.getChildren().add(
             DialogBox.getBossaDialog(bossa.getWelcome(), bossaImage)
@@ -47,6 +48,8 @@ public class MainWindow extends AnchorPane {
 
     @FXML
     private void handleUserInput() {
+        assert bossa != null : "Bossa must be initialized before handling input";
+
         String input = userInput.getText();
         String response = bossa.getResponse(input);
 
@@ -58,6 +61,7 @@ public class MainWindow extends AnchorPane {
         userInput.clear();
 
         if (input.trim().equalsIgnoreCase("bye")) {
+            
             javafx.application.Platform.exit();
         }
     }

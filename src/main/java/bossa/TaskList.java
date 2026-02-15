@@ -25,6 +25,7 @@ public class TaskList {
      * @param tasks the initial list of tasks
      */
     public TaskList(List<Task> tasks) {
+        assert tasks != null : "Task list provided to constructor must not be null";
         this.tasks = tasks;
     }
 
@@ -43,7 +44,11 @@ public class TaskList {
      * @param task the task to add
      */
     public void add(Task task) {
+        assert task != null : "Cannot add null task to TaskList";
+        int before = tasks.size();
         tasks.add(task);
+        assert tasks.size() == before + 1
+            : "Task list size should increase after adding a task";
     }
 
     /**
@@ -53,7 +58,14 @@ public class TaskList {
      * @return the removed task
      */
     public Task remove(int index){
-        return tasks.remove(index);
+        assert index >= 0 && index < tasks.size() 
+            : "Remove index out of bounds";
+
+        int before = tasks.size();
+        Task removed = tasks.remove(index);
+        assert tasks.size() == before - 1
+            : "Task list size should decrease after removal";
+        return removed;
     }
 
     /**
@@ -63,6 +75,8 @@ public class TaskList {
      * @return the task at the given index
      */
     public Task get(int index){
+        assert index >= 0 && index < tasks.size()
+            : "Get index out of bounds";
         return tasks.get(index);
     }
 
@@ -76,9 +90,13 @@ public class TaskList {
     }
 
     public List<Task> find(String keyword) {
+        assert keyword != null : "Keyword for find must not be null";
+
         List<Task> matches = new ArrayList<>();
 
         for (Task task : tasks) {
+            assert task != null : "Task in list should not be null";
+
             if (task.description.toLowerCase().contains(keyword.toLowerCase())) {
                 matches.add(task);
             }

@@ -19,6 +19,9 @@ public class Task {
      * @param description the description of the task
      */
     public Task(String description) {
+        assert description != null : "Task description must not be null";
+        assert !description.trim().isEmpty()
+            : "Task description must not be empty";
         this.description = description;
         this.isDone = false;
     }
@@ -33,10 +36,12 @@ public class Task {
     }
 
     public void markAsDone() {
+        assert !isDone : "Task is already marked as done";
         isDone = true;
     }
 
     public void markAsNotDone() {
+        assert isDone : "Task is already marked as not done";
         isDone = false;
     }
 
@@ -73,7 +78,11 @@ public class Task {
      * @throws IllegalArgumentException if the task type is unknown
      */
     public static Task fromStorageString(String line) {
+        assert line != null : "Storage line must not be null";
+
         String[] parts = line.split(" \\| ");
+        assert parts.length >= 3 : "Invalid storage format";
+
         String type = parts[0];
         boolean isDone = parts[1].equals("1");
         Task task;
@@ -83,9 +92,11 @@ public class Task {
             task = new ToDo(parts[2]);
             break;
         case "D":
+            assert parts.length == 4 : "Deadline format invalid";
             task = new Deadline(parts[2], parts[3]);
             break;
         case "E":
+            assert parts.length == 5 : "Event format invalid";
             task = new Event(parts[2], parts[3], parts[4]);
             break;
         default:

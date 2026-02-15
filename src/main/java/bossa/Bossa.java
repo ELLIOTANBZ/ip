@@ -22,6 +22,7 @@ public class Bossa {
         ui = new Ui();
         storage = new Storage("data/bossa.txt");
         List<Task> loaded = storage.loadTasks();
+        assert loaded != null : "Loaded task list should not be null";
         tasks = new TaskList(loaded);
     }
 
@@ -33,6 +34,7 @@ public class Bossa {
 
         String fullInput = input.trim();
         String command = Parser.getCommandWord(fullInput);
+        assert command != null : "Parser should never return null command";
 
         if (command.isEmpty()) {
             return ui.showDontUnderstand();
@@ -61,6 +63,7 @@ public class Bossa {
         if (command.equalsIgnoreCase("unmark")) {
             try {
                 int index = Integer.parseInt(fullInput.split(" ")[1]) - 1;
+                assert index >= 0 : "Task index should be non-negative";
                 Task task = tasks.get(index);
                 task.markAsNotDone();
                 storage.saveTasks(tasks.getAll());
@@ -87,7 +90,9 @@ public class Bossa {
                 return ui.showMessage("Boss, the description of a todo cannot be empty.");
             }
             Task task = new ToDo(description);
+            int before = tasks.size();
             tasks.add(task);
+            assert tasks.size() == before + 1 : "Task list size should increase after add";
             storage.saveTasks(tasks.getAll());
             return ui.addTask(task, tasks.size());
         }

@@ -1,7 +1,8 @@
 T | 0 | borrow book
 T | 0 | borrow book
 T | 0 | borrow book
-T | 0 | borrow book
 E | 0 | book club orientation | 2019-04-29 | 2019-05-08
 T | 0 | borrow book
 E | 0 | book club orientation | 2019-04-29 | 2019-05-08
+T | 0 | borrow book
+T | 0 | borrow book

@@ -26,6 +26,7 @@ public class Bossa {
         ui = new Ui();
         storage = new Storage(filePath);
         List<Task> loaded = storage.loadTasks();
+        assert loaded != null : "Loaded task list should not be null";
         tasks = new TaskList(loaded);
     }
 
@@ -40,6 +41,7 @@ public class Bossa {
 
         String fullInput = input.trim();
         String command = Parser.getCommandWord(fullInput);
+        assert command != null : "Parser should never return null command";
 
         if (command.isEmpty()) {
             return ui.showDontUnderstand();

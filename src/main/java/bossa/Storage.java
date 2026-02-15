@@ -36,21 +36,30 @@ public class Storage {
      */
     public List<Task> loadTasks() {
 
-        List<Task> tasks = new ArrayList<>();
+        List<Task> loadedTasks = new ArrayList<>();
 
         if (!Files.exists(filePath)) {
-            return tasks;
+            return loadedTasks;
         }
 
         try {
-            for (String line : Files.readAllLines(filePath)) {
-                try {
-                    tasks.add(Task.fromStorageString(line));
-                } catch (Exception ignored) {}
+            List<String> lines = Files.readAllLines(filePath);
+            for (String line : lines) {
+                addTaskSafely(loadedTasks, line);
             }
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            // Unable to read file; return tasks loaded so far
+        }
 
-        return tasks;
+        return loadedTasks;
+    }
+
+    private void addTaskSafely(List<Task> tasks, String line) {
+        try {
+            tasks.add(Task.fromStorageString(line));
+        } catch (Exception e) {
+            // Ignore malformed lines
+        }
     }
 
     /**
@@ -61,9 +70,12 @@ public class Storage {
      *
      * @param tasks the list of tasks to save
      */
-    public void saveTasks(List<Task> tasks)  {
+    public void saveTasks(List<Task> tasks) {
         try {
-            Files.createDirectories(filePath.getParent());
+            Path parent = filePath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
 
             List<String> lines = new ArrayList<>();
             for (Task task : tasks) {
@@ -71,7 +83,9 @@ public class Storage {
             }
 
             Files.write(filePath, lines);
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            // Unable to save tasks
+        }
     }
 
 }

@@ -51,6 +51,10 @@ public class TaskList {
             : "Task list size should increase after adding a task";
     }
 
+    public void add(int index, Task task) {
+        tasks.add(index, task);
+    }
+
     /**
      * Removes and returns the task at the specified index.
      *

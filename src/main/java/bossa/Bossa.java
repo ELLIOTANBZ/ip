@@ -12,6 +12,7 @@ public class Bossa {
     private final TaskList tasks;
     private final Ui ui;
     private final Storage storage;
+    private Runnable lastUndoAction = null;
 
     private static final int TODO_CMD_LEN = 5;
     private static final int DEADLINE_CMD_LEN = 9;
@@ -83,6 +84,11 @@ public class Bossa {
             return handleFind(fullInput);
         }
 
+        if (command.equalsIgnoreCase("undo")) {
+            return handleUndo();
+        }
+
+
         return ui.showDontUnderstand();
 
     }
@@ -100,16 +106,26 @@ public class Bossa {
      * @param done true to mark the task as done, false to mark it as not done
      * @return the response message to be shown to the user
      */
-    private String handleMark(int index, boolean done){
+    private String handleMark(int index, boolean isDone){
         try {
             Task task = tasks.get(index);
-            if (done) {
+
+            if (isDone) {
                 task.markAsDone();
             } else {
                 task.markAsNotDone();
             }
             storage.saveTasks(tasks.getAll());
-            return done ? ui.markAsDone(task) : ui.markAsUndone(task);
+
+            lastUndoAction = () -> {
+                if (!isDone) {
+                    task.markAsDone();
+                } else {
+                    task.markAsNotDone();
+                }
+            };
+
+            return isDone ? ui.markAsDone(task) : ui.markAsUndone(task);
         } catch (IndexOutOfBoundsException | NumberFormatException e) {
             return ui.showMessage("Apologies Boss, that task number does not exist.");
         }
@@ -127,6 +143,9 @@ public class Bossa {
         try {
             Task removed = tasks.remove(index);
             storage.saveTasks(tasks.getAll());
+
+            lastUndoAction = () -> tasks.add(index, removed);
+
             return ui.removeTask(removed, tasks.size());
         } catch (Exception e) {
             return ui.showMessage("Apologies Boss, that task number does not exist.");
@@ -227,8 +246,25 @@ public class Bossa {
     private String handleAddTask(Task task){
         tasks.add(task);
         storage.saveTasks(tasks.getAll());
+
+        lastUndoAction = () -> tasks.remove(tasks.size() - 1);
+
         return ui.addTask(task, tasks.size());
     }
+
+
+    private String handleUndo() {
+        if (lastUndoAction == null) {
+            return ui.showMessage("Boss, nothing to undo.");
+        }
+
+        lastUndoAction.run();
+        storage.saveTasks(tasks.getAll());
+        lastUndoAction = null;
+
+        return ui.showMessage("Undid the previous command.");
+    }
+
 
 
     public static void main(String[] args) {

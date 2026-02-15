@@ -90,9 +90,9 @@ public class Bossa {
     }
 
     /**
-     * Marks or unmarks the task at the specified index.
+     * Marks or unmarks the task at the specified index
      * Updates the task status, saves the updated task list to storage,
-     * and returns the corresponding UI response message.
+     * and returns the corresponding UI response message
      *
      * @param index zero-based index of the task in the task list
      * @param done true to mark the task as done, false to mark it as not done

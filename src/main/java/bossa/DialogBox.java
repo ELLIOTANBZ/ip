@@ -40,6 +40,7 @@ public class DialogBox extends HBox {
         ObservableList<Node> tmp = FXCollections.observableArrayList(this.getChildren());
         Collections.reverse(tmp);     // inverting everything in this DialogBox (stored in an array)
         this.getChildren().setAll(tmp);
+        dialog.getStyleClass().add("reply-label");
     }
 
     public static DialogBox getUserDialog(String s, Image i){

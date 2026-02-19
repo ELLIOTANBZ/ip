@@ -1,7 +1,10 @@
 T | 0 | borrow book
 T | 0 | stream positions
-E | 0 | grammys | 2019-04-29 | 2019-05-08
+E | 1 | grammys | 2019-04-29 | 2019-05-08
 D | 0 | return book | 2019-05-25
 T | 0 | bookshop
 T | 0 | BOOk
 T | 0 | END NICKI
+E | 0 | prepare for Grammys | 2019-04-29 | 2019-05-08
+T | 0 | 5 ju
+E | 0 | prepare for Grammys | 2019-04-29 | 2019-05-08

@@ -4,8 +4,8 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /**
- * The main class of the Bossa chatbot application. Handles user interface, task
- * storage, and execution of commands
+ * The main class of the Bossa chatbot application.
+ * Handles user input and executes commands accordingly.
  */
 public class Bossa {
 
@@ -14,12 +14,8 @@ public class Bossa {
     private final Storage storage;
     private Runnable lastUndoAction = null;
 
-    private static final int TODO_CMD_LEN = 5;
-    private static final int DEADLINE_CMD_LEN = 9;
-    private static final int EVENT_CMD_LEN = 6;
-
     /**
-     * Contructs a new Bossa chatbot instance
+     * Constructs a Bossa chatbot with the specified storage file.
      *
      * @param filePath the file path to load and save tasks
      */
@@ -31,15 +27,13 @@ public class Bossa {
         tasks = new TaskList(loaded);
     }
 
-
     /**
-     * Runs the Bossa application, continuously reading user input and executing
-     * commands until the user exits.
+     * Processes the user input and returns the chatbot's response.
+     *
+     * @param input the user input
+     * @return the chatbot response for the given input
      */
-
-
     public String getResponse(String input) {
-
         String fullInput = input.trim();
         String command = Parser.getCommandWord(fullInput);
         assert command != null : "Parser should never return null command";
@@ -57,15 +51,15 @@ public class Bossa {
         }
 
         if (command.equalsIgnoreCase("mark")) {
-            return handleMark(parseIndex(fullInput), true);
+            return handleMark(fullInput, true);
         }
 
         if (command.equalsIgnoreCase("unmark")) {
-            return handleMark(parseIndex(fullInput), false);
+            return handleMark(fullInput, false);
         }
 
         if (command.equalsIgnoreCase("remove")) {
-            return handleRemove(parseIndex(fullInput));
+            return handleRemove(fullInput);
         }
 
         if (command.equalsIgnoreCase("todo")) {
@@ -88,26 +82,19 @@ public class Bossa {
             return handleUndo();
         }
 
-
         return ui.showDontUnderstand();
-
-    }
-
-    private int parseIndex(String input) throws NumberFormatException {
-        return Integer.parseInt(input.split(" ")[1]) - 1;
     }
 
     /**
-     * Marks or unmarks the task at the specified index
-     * Updates the task status, saves the updated task list to storage,
-     * and returns the corresponding UI response message
+     * Marks or unmarks the task at the specified index.
      *
-     * @param index zero-based index of the task in the task list
-     * @param done true to mark the task as done, false to mark it as not done
-     * @return the response message to be shown to the user
+     * @param input the full user input containing a command and index
+     * @param isDone true to mark as done, false to unmark
+     * @return the result message to be shown to the user
      */
-    private String handleMark(int index, boolean isDone){
+    private String handleMark(String input, boolean isDone) {
         try {
+            int index = Parser.parseIndex(input);
             Task task = tasks.get(index);
 
             if (isDone) {
@@ -115,165 +102,180 @@ public class Bossa {
             } else {
                 task.markAsNotDone();
             }
+
             storage.saveTasks(tasks.getAll());
 
             lastUndoAction = () -> {
-                if (!isDone) {
-                    task.markAsDone();
-                } else {
+                if (isDone) {
                     task.markAsNotDone();
+                } else {
+                    task.markAsDone();
                 }
+                storage.saveTasks(tasks.getAll());
             };
 
             return isDone ? ui.markAsDone(task) : ui.markAsUndone(task);
-        } catch (IndexOutOfBoundsException | NumberFormatException e) {
+
+        } catch (NumberFormatException e) {
+            return ui.showMessage("Boss, please provide a valid task number.");
+        } catch (IndexOutOfBoundsException e) {
             return ui.showMessage("Apologies Boss, that task number does not exist.");
         }
     }
 
     /**
-     * Removes the task at the specified index from the task list.
-     * Saves the updated task list to storage and returns the
-     * corresponding UI response message.
+     * Removes the task at the specified index.
      *
-     * @param index zero-based index of the task to be removed
-     * @return the response message to be shown to the user
+     * @param input the full user input containing a command and index
+     * @return the result message to be shown to the user
      */
-    private String handleRemove(int index){
+    private String handleRemove(String input) {
         try {
+            int index = Parser.parseIndex(input);
             Task removed = tasks.remove(index);
+
             storage.saveTasks(tasks.getAll());
 
-            lastUndoAction = () -> tasks.add(index, removed);
+            lastUndoAction = () -> {
+                tasks.add(index, removed);
+                storage.saveTasks(tasks.getAll());
+            };
 
             return ui.removeTask(removed, tasks.size());
-        } catch (Exception e) {
+
+        } catch (NumberFormatException e) {
+            return ui.showMessage("Boss, please provide a valid task number.");
+        } catch (IndexOutOfBoundsException e) {
             return ui.showMessage("Apologies Boss, that task number does not exist.");
         }
     }
 
-
     /**
-     * Parses the input string to create and add a new ToDo task.
-     * Validates that the task description is not empty before adding it.
+     * Creates and adds a new ToDo task from user input.
      *
-     * @param input full user input containing the todo command and description
-     * @return the response message to be shown to the user
+     * @param input the full user input
+     * @return the result message to be shown to the user
      */
-    private String handleTodo(String input){
-        String[] parts = input.split(" ", 2);
+    private String handleTodo(String input) {
+        try {
+            String description = Parser.parseTodo(input);
+            Task task = new ToDo(description);
 
-        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            tasks.add(task);
+            storage.saveTasks(tasks.getAll());
+
+            lastUndoAction = () -> {
+                tasks.remove(tasks.size() - 1);
+                storage.saveTasks(tasks.getAll());
+            };
+
+            return ui.addTask(task, tasks.size());
+
+        } catch (IllegalArgumentException e) {
             return ui.showMessage("Boss, the description of a todo cannot be empty.");
         }
-
-        String description = parts[1].trim();
-        Task task = new ToDo(description);
-        return handleAddTask(task);
     }
 
     /**
-     * Parses the input string to create and add a new Deadline task.
-     * Expects the format: deadline &lt;description&gt; /by &lt;date&gt;.
-     * Validates the format and date before adding the task.
+     * Creates and adds a new Deadline task from user input.
      *
-     * @param input full user input containing the deadline command
-     * @return the response message to be shown to the user
+     * @param input the full user input
+     * @return the result message to be shown to the user
      */
     private String handleDeadline(String input) {
-        String[] parts = input.substring(DEADLINE_CMD_LEN).split(" /by ");
-        if (parts.length < 2 || parts[1].trim().isEmpty()) {
-            return ui.showMessage("Boss, Deadline format: deadline <description> /by <time>");
-        }
         try {
-            Task task = new Deadline(parts[0].trim(), parts[1].trim());
-            return handleAddTask(task);
+            String[] parts = Parser.parseDeadline(input);
+            Task task = new Deadline(parts[0], parts[1]);
+
+            tasks.add(task);
+            storage.saveTasks(tasks.getAll());
+
+            lastUndoAction = () -> {
+                tasks.remove(tasks.size() - 1);
+                storage.saveTasks(tasks.getAll());
+            };
+
+            return ui.addTask(task, tasks.size());
+
+        } catch (IllegalArgumentException e) {
+            return ui.showMessage("Boss, Deadline format: deadline <description> /by <time>");
         } catch (DateTimeParseException e) {
             return ui.showMessage("Boss, invalid date format. Use yyyy-MM-dd for deadlines.");
         }
     }
 
     /**
-     * Parses the input string to create and add a new Event task.
-     * Expects the format: event &lt;description&gt; /from &lt;start&gt; /to &lt;end&gt;.
-     * Validates the format and date values before adding the task.
+     * Creates and adds a new Event task from user input.
      *
-     * @param input full user input containing the event command
-     * @return the response message to be shown to the user
+     * @param input the full user input
+     * @return the result message to be shown to the user
      */
-    private String handleEvent(String input){
-        String[] parts = input.substring(EVENT_CMD_LEN).split(" /from | /to ");
-        if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
-           return ui.showMessage("Boss, Event format: event <description> /from <start> /to <end>");
-        }
+    private String handleEvent(String input) {
         try {
-            Task task = new Event(parts[0].trim(), parts[1].trim(), parts[2].trim());
-            return handleAddTask(task);
+            String[] parts = Parser.parseEvent(input);
+            Task task = new Event(parts[0], parts[1], parts[2]);
+
+            tasks.add(task);
+            storage.saveTasks(tasks.getAll());
+
+            lastUndoAction = () -> {
+                tasks.remove(tasks.size() - 1);
+                storage.saveTasks(tasks.getAll());
+            };
+
+            return ui.addTask(task, tasks.size());
+
+        } catch (IllegalArgumentException e) {
+            return ui.showMessage(
+                "Boss, Event format: event <description> /from <start> /to <end>");
         } catch (DateTimeParseException e) {
             return ui.showMessage("Boss, invalid date format. Use yyyy-MM-dd for events.");
         }
     }
 
     /**
-     * Searches for tasks containing the specified keyword.
-     * Extracts the keyword from the user input and returns
-     * the matching tasks via the UI.
+     * Finds tasks containing the given keyword.
      *
-     * @param input full user input containing the find command
-     * @return the response message to be shown to the user
+     * @param input the full user input containing the search keyword
+     * @return the result message listing matched tasks
      */
-    private String handleFind(String input){
+    private String handleFind(String input) {
         try {
-            String keyword = input.substring(5).trim();
-            if (keyword.isEmpty()) {
-                return ui.showMessage("Boss, please provide a keyword to search for.");
-            }
-
+            String keyword = Parser.parseFind(input);
             List<Task> matches = tasks.find(keyword);
             return ui.findTask(matches);
-        } catch (IndexOutOfBoundsException e) {
+
+        } catch (IllegalArgumentException e) {
             return ui.showMessage("Boss, please provide a keyword to search for.");
         }
     }
 
     /**
-     * Adds the specified task to the task list, saves the updated
-     * list to storage, and returns the corresponding UI response message.
+     * Undoes the last command if possible.
      *
-     * @param task the task to be added
-     * @return the response message to be shown to the user
+     * @return the result message indicating undo status
      */
-    private String handleAddTask(Task task){
-        tasks.add(task);
-        storage.saveTasks(tasks.getAll());
-
-        lastUndoAction = () -> tasks.remove(tasks.size() - 1);
-
-        return ui.addTask(task, tasks.size());
-    }
-
-
     private String handleUndo() {
         if (lastUndoAction == null) {
             return ui.showMessage("Boss, nothing to undo.");
         }
 
         lastUndoAction.run();
-        storage.saveTasks(tasks.getAll());
         lastUndoAction = null;
 
         return ui.showMessage("Undid the previous command.");
     }
 
-
-
     public static void main(String[] args) {
-        // ..
+        new Bossa("data/bossa.txt");
     }
 
+    /**
+     * Returns the welcome message from the UI.
+     *
+     * @return the welcome message
+     */
     public String getWelcome() {
         return ui.showWelcome();
     }
-
-
 }
